@@ -130,7 +130,7 @@ Three files, each with a distinct purpose:
 ### Install
 
 ```bash
-git clone https://github.com/Sukrit-bit/learning-from-building.git
+git clone https://github.com/Sukrit-bit/claude-operating-system.git
 cd learning-from-building
 chmod +x install.sh && ./install.sh
 ```
