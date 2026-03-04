@@ -9,7 +9,7 @@ How the framework is structured, why each decision was made, and how to extend i
 Claude Code consumes each layer differently. The directory tree below annotates how.
 
 ```
-learning-from-building/
+claude-operating-system/
 ├── CLAUDE.md                        # Auto-loaded every turn (context tax)
 ├── frameworks/                      # Referenced on demand by skills
 │   ├── FOUR_DISCIPLINES.md
@@ -131,7 +131,7 @@ Three files, each with a distinct purpose:
 
 ```bash
 git clone https://github.com/Sukrit-bit/claude-operating-system.git
-cd learning-from-building
+cd claude-operating-system
 chmod +x install.sh && ./install.sh
 ```
 

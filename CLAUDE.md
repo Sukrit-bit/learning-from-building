@@ -7,7 +7,7 @@ Meta-framework for human-AI collaboration with Claude Code. Contains templates, 
 ## Architecture
 
 ```
-learning-from-building/
+claude-operating-system/
 ├── frameworks/     Conceptual models (Four Disciplines, Session Lifecycle)
 ├── templates/      Starter files for new projects (CLAUDE.md, MEMORY.md, etc.)
 ├── guides/         Reference material (Capability Map, Agent Orchestration)

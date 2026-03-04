@@ -48,7 +48,7 @@ Building on [Nate B. Jones' Four Prompting Disciplines](https://www.youtube.com/
 
 ```bash
 git clone https://github.com/Sukrit-bit/claude-operating-system.git
-cd learning-from-building
+cd claude-operating-system
 chmod +x install.sh
 ./install.sh
 ```
