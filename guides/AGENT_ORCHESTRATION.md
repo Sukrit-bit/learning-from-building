@@ -25,7 +25,7 @@ This mirrors the planner-worker architecture described in production agent deplo
 - **Code review** — fresh context per task catches bugs that accumulated context misses. A reviewer agent that hasn't seen the implementation approach often finds issues the author's context explains away.
 - **Documentation updates** — 3 agents writing 3 docs simultaneously is as fast as writing 1 doc sequentially.
 - **Any task consuming >20% of remaining context budget** — when a task would significantly compress the main thread, delegate it.
-- **The V16 Daily Briefing experience:** a spec reviewer agent caught a border width bug; a code quality reviewer agent caught an XSS vulnerability — both trivial to fix at review time, but each would have been expensive to discover and fix later in the cycle.
+- **Real example from an automated content pipeline:** a spec reviewer agent caught a border width bug; a code quality reviewer agent caught an XSS vulnerability — both trivial to fix at review time, but each would have been expensive to discover and fix later in the cycle.
 
 ---
 

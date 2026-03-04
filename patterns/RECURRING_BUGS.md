@@ -9,9 +9,9 @@ Bugs that appeared across multiple projects. Each entry includes the pattern, ho
 **Pattern:** New ingestion paths write unexpected status values that downstream pipeline stages don't query for.
 
 **Appearances:** 3 times across 2 projects
-- Daily Briefing V8: ingestion wrote `pending`, downstream queried for `no_transcript` — items fell through the cracks
-- AI Summit Session 3: ingestion wrote `transcribed`, downstream expected `has_content` — transcription work was never picked up
-- AI Summit Session 6: extraction wrote `extracted`, downstream expected `has_content` — same category of failure, different stage
+- Automated content pipeline: ingestion wrote `pending`, downstream queried for `no_transcript` — items fell through the cracks
+- Conference intelligence system (session 3): ingestion wrote `transcribed`, downstream expected `has_content` — transcription work was never picked up
+- Conference intelligence system (session 6): extraction wrote `extracted`, downstream expected `has_content` — same category of failure, different stage
 
 **Root Cause:** The `status` field acts as a state machine without a documented state diagram. Every developer (or Claude session) writes what feels intuitive for their stage, with no single source of truth about which values are valid or what the downstream consumers actually query.
 
@@ -28,8 +28,8 @@ Bugs that appeared across multiple projects. Each entry includes the pattern, ho
 **Pattern:** Main thread consumed too much context window, forcing early session close before work was complete.
 
 **Appearances:** 2 consecutive sessions
-- AI Summit Session 5: large file reads + verbose progress explanations exhausted context before all sessions were processed
-- AI Summit Session 6: same pattern — no fix had been applied between sessions, so it recurred identically
+- Content extraction pipeline (session 5): large file reads + verbose progress explanations exhausted context before all items were processed
+- Content extraction pipeline (session 6): same pattern — no fix had been applied between sessions, so it recurred identically
 
 **Root Cause:** Reading large files (>100 lines) in the main thread, echoing pasted content back to the user verbatim, and writing verbose multi-paragraph progress explanations all consume context budget that cannot be recovered. The main thread context window is a finite, irreplaceable resource.
 
@@ -47,8 +47,8 @@ Bugs that appeared across multiple projects. Each entry includes the pattern, ho
 **Pattern:** `CLAUDE.md` or `MEMORY.md` doesn't match project reality, causing future sessions to operate on false assumptions.
 
 **Appearances:** Continuously across all projects
-- Daily Briefing: `MEMORY.md` was stale — listed completed tasks as pending, listed deprecated approaches as current
-- AI Summit: `CLAUDE.md` said "Gemini primary" for 3 full sessions after GPT-4o had become the actual primary provider
+- Automated content pipeline: `MEMORY.md` was stale — listed completed tasks as pending, listed deprecated approaches as current
+- Conference intelligence system: `CLAUDE.md` said "Gemini primary" for 3 full sessions after GPT-4o had become the actual primary provider
 
 **Root Cause:** Same bug class as in-memory mutation bugs — "reality changed but the representation didn't." The documentation was correct at the time of writing, then reality diverged and no one updated the file. Unlike code bugs that produce immediate errors, documentation bugs are silent and accumulate.
 
@@ -65,8 +65,8 @@ Bugs that appeared across multiple projects. Each entry includes the pattern, ho
 **Pattern:** Operations succeed at the call level but produce wrong or empty results, with no error surfaced.
 
 **Appearances:** 2 projects
-- Daily Briefing V7: 73% transcript waste rate — 28 out of 80 items had no transcripts, but the fetch operation returned success with empty content rather than an error. Items were marked complete and never retried.
-- AI Summit: batch extraction failures were reported as failed, but individual retries of the same items succeeded. The batch wrapper was swallowing per-item errors and reporting aggregate failure.
+- Automated content pipeline: high transcript waste rate — items had no transcripts, but the fetch operation returned success with empty content rather than an error. Items were marked complete and never retried.
+- Conference intelligence system: batch extraction failures were reported as failed, but individual retries of the same items succeeded. The batch wrapper was swallowing per-item errors and reporting aggregate failure.
 
 **Root Cause:** Code doesn't distinguish "no data exists" from "failed to fetch." Both conditions return success with empty content. Downstream code trusts the success status and doesn't validate the content, so empty results flow silently into the database.
 
@@ -84,8 +84,8 @@ Bugs that appeared across multiple projects. Each entry includes the pattern, ho
 **Pattern:** Parallel processing streams look independent at the task level but share rate-limited APIs at the infrastructure level, causing 429s that appear random.
 
 **Appearances:** 2 projects
-- AI Summit: Whisper transcription and GPT-4o extraction both call the OpenAI API. Running both pipelines simultaneously caused rate limit collisions. Each stream individually stayed within limits; together they exceeded them.
-- Delhi Co-Pilot: Gemini 429 errors during sequential testing sessions that felt slow — the issue was insufficient spacing between calls, not concurrency.
+- Conference intelligence system: Whisper transcription and GPT-4o extraction both call the OpenAI API. Running both pipelines simultaneously caused rate limit collisions. Each stream individually stayed within limits; together they exceeded them.
+- Civic information tool: Gemini 429 errors during sequential testing sessions that felt slow — the issue was insufficient spacing between calls, not concurrency.
 
 **Root Cause:** Streams look independent at the task level (transcription vs extraction) but share rate-limited resources at the infrastructure level (OpenAI API quota). Rate limits are per-account, not per-process or per-task-type.
 

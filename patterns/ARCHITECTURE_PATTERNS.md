@@ -17,7 +17,7 @@ Patterns validated across multiple projects. Each includes when to use, how to i
 4. Log which provider ultimately succeeded
 5. Surface aggregate fallback statistics at the end of each run
 
-**Validated By:** AI Summit — all 200+ content extractions succeeded because Gemini → OpenAI → local fallback meant no single provider failure killed the batch.
+**Validated By:** A conference intelligence system — all 200+ content extractions succeeded because Gemini → OpenAI fallback meant no single provider failure killed the batch.
 
 **Anti-Pattern:** No fallback. Single provider failures kill the entire pipeline and require manual intervention to restart. One OpenAI outage or rate limit spike blocks all work.
 
@@ -35,7 +35,7 @@ Patterns validated across multiple projects. Each includes when to use, how to i
 3. The aggregate write should be shorter: strip project-specific context, keep the universally applicable insight
 4. Never defer the aggregate write to "later" — it won't happen
 
-**Example:** Every session generates learnings that go to both `learnings.md` (full detail, project-specific) and `learnings_for_Sukrit_global.md` (condensed, cross-project). The global file is always current because it's updated at the same moment as the project file.
+**Example:** Every session generates learnings that go to both the project-level learnings file (full detail, project-specific) and a global cross-project learnings file (condensed, cross-project). The global file is always current because it's updated at the same moment as the project file.
 
 ---
 
@@ -52,7 +52,7 @@ Patterns validated across multiple projects. Each includes when to use, how to i
 4. Re-running the script queries only items without a completion status
 5. The script is idempotent: running it 10 times produces the same result as running it once
 
-**Validated By:** Daily Briefing V8 concurrent processing — 868 items processed over multiple interrupted runs. Any interruption lost at most 1 item (the one currently in flight), never the entire batch.
+**Validated By:** An automated content pipeline processing 868 items over multiple interrupted runs. Any interruption lost at most 1 item (the one currently in flight), never the entire batch.
 
 **Why This Matters:** Without this pattern, a network timeout at item 700 of 868 means starting over from item 1. With this pattern, it means resuming from item 701.
 
@@ -71,7 +71,7 @@ Patterns validated across multiple projects. Each includes when to use, how to i
 4. Default behavior: prompt user to confirm before switching from dry-run to live
 
 **Examples:**
-- Daily Briefing `--no-transcripts` flag validated filter logic before committing to Whisper API costs
+- An automated content pipeline's `--no-transcripts` flag validated filter logic before committing to Whisper API costs
 - `terraform plan` before `terraform apply` is the canonical example of this pattern in infrastructure
 
 **Anti-Pattern:** Running bulk operations without a dry-run option. The first run is both the test and the production execution. Mistakes are discovered after the cost is already incurred.
@@ -125,7 +125,7 @@ Patterns validated across multiple projects. Each includes when to use, how to i
 4. In the scraping function: try live fetch first, fall back to git-committed cache if the fetch fails
 5. Log clearly which path was taken: "Loaded from live" vs "Loaded from cache (live fetch failed)"
 
-**Validated By:** Delhi Co-Pilot — `delhijalboard.delhi.gov.in` was unreachable from Railway (cloud provider IPs blocked). Local scrape committed to git meant the deployed app still had the content.
+**Validated By:** A civic information tool — a government website was unreachable from the cloud hosting provider (cloud provider IPs blocked). Local scrape committed to git meant the deployed app still had the content.
 
 **Anti-Pattern:** Assuming the scraping environment matches the development environment. Sites that work fine on a laptop may be entirely unreachable from a cloud provider's IP range.
 

@@ -1,5 +1,5 @@
 # The Four Prompting Disciplines
-## A practical framework for working with AI agents. Based on Nate B. Jones' framework, adapted with real experience from 22+ sessions.
+## A practical framework for working with AI agents. Based on Nate B. Jones' framework, adapted through production AI builds.
 
 ---
 
@@ -19,7 +19,7 @@ The four disciplines are cumulative — each layer needs the ones below it. You 
 Clear instructions, relevant examples, appropriate guardrails, explicit output format, ambiguity resolution.
 
 ### Where we stand
-Strong from 22+ sessions. Maintain with periodic re-reads of prompting docs.
+Strong foundation. Maintain with periodic re-reads of prompting docs.
 
 ### Session Checklist
 - [ ] Clear, specific instruction (not "make it good")
@@ -94,7 +94,7 @@ From "fixing it in real time" to "getting the spec right up front." Real-time pr
 
 ### Our Existing Spec Engineering
 - **NEXT_SESSION_PROMPT.md** — IS spec engineering in practice (our best example)
-- **REPORT_SPEC.md** — measurable acceptance criteria + evaluation checklist (AI Summit project)
+- **REPORT_SPEC.md** — measurable acceptance criteria + evaluation checklist
 - **CLAUDE.md** — the standing specification for every session
 
 ### Five Primitives
