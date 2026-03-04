@@ -3,6 +3,8 @@ name: session-start
 description: "Session start protocol. Loads project context in cache-optimal order, reports action items, checks document accuracy, and proposes a parallelized execution plan. Use at the beginning of any session or when the user says 'start session'."
 ---
 
+> **Path resolution:** This skill is part of the learning-from-building framework. The framework repo root is two directories up from this skill's base directory. All file references below are relative to the framework repo root.
+
 ## Session Start Protocol
 
 Execute all five steps in order. Keep the startup phase to 5–10 minutes maximum.
@@ -71,7 +73,7 @@ Wait for user confirmation or adjustment before proceeding to Step 4.
 
 Before beginning execution, surface any relevant known issues:
 
-- Reference `/Users/sukritandvandana/Documents/Projects/learning-from-building/patterns/RECURRING_BUGS.md` if it exists.
+- Reference `patterns/RECURRING_BUGS.md` in the framework repo if it exists.
 - If the session involves **data pipelines** → remind the user about the status mismatch pattern.
 - If the session is **long or complex** → remind the user about context compaction prevention strategies.
 - If the session involves **API integrations** → remind the user about rate limit coordination.
@@ -101,7 +103,7 @@ Only surface patterns that are relevant to the current session's planned work. D
 
 ## Reference Files
 
-- Templates: `/Users/sukritandvandana/Documents/Projects/learning-from-building/templates/`
-- Session lifecycle: `/Users/sukritandvandana/Documents/Projects/learning-from-building/frameworks/SESSION_LIFECYCLE.md`
-- Capability map: `/Users/sukritandvandana/Documents/Projects/learning-from-building/guides/CAPABILITY_MAP.md`
-- Agent orchestration: `/Users/sukritandvandana/Documents/Projects/learning-from-building/guides/AGENT_ORCHESTRATION.md`
+- Templates: `templates/` in the framework repo
+- Session lifecycle: `frameworks/SESSION_LIFECYCLE.md` in the framework repo
+- Capability map: `guides/CAPABILITY_MAP.md` in the framework repo
+- Agent orchestration: `guides/AGENT_ORCHESTRATION.md` in the framework repo

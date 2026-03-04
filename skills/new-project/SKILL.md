@@ -3,6 +3,8 @@ name: new-project
 description: "New project setup. Creates CLAUDE.md from template, initializes MEMORY.md, sets up directory structure with best practices. Use when starting a new project."
 ---
 
+> **Path resolution:** This skill is part of the learning-from-building framework. The framework repo root is two directories up from this skill's base directory. All file references below are relative to the framework repo root.
+
 ## Step 1: Understand the Project
 
 Use AskUserQuestion to ask (one question at a time):
@@ -14,17 +16,17 @@ Use AskUserQuestion to ask (one question at a time):
 
 ## Step 2: Create CLAUDE.md
 
-- Copy the template from `/Users/sukritandvandana/Documents/Projects/learning-from-building/templates/CLAUDE_MD_TEMPLATE.md`
+- Copy `templates/CLAUDE_MD_TEMPLATE.md` from the framework repo
 - Fill in the Identity section with user's answers
 - Fill in the Architecture section based on tech stack
 - Seed the Constraint Architecture with universal rules from the template PLUS:
   - Project-specific MUSTS based on tech stack (e.g., for Python projects: "always use virtual environment", for web projects: "always test in both Chrome and Safari")
-  - Relevant bug prevention rules from `/Users/sukritandvandana/Documents/Projects/learning-from-building/patterns/RECURRING_BUGS.md`
+  - Relevant bug prevention rules from `patterns/RECURRING_BUGS.md` in the framework repo
 - Keep it under 80 lines initially — it will grow organically
 
 ## Step 3: Create MEMORY.md
 
-- Copy the template from `/Users/sukritandvandana/Documents/Projects/learning-from-building/templates/MEMORY_MD_TEMPLATE.md`
+- Copy `templates/MEMORY_MD_TEMPLATE.md` from the framework repo
 - Fill in Project State with initial version/phase
 - Leave Action Required empty
 - Add initial Technical Context (API keys location, environment setup)

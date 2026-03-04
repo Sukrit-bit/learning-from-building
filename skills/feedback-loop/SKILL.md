@@ -3,9 +3,11 @@ name: feedback-loop
 description: "Cross-project learning review. Analyzes global learnings file for recurring patterns, suggests template improvements, and identifies new bug classes. Run every 3 sessions or when requested."
 ---
 
+> **Path resolution:** This skill is part of the learning-from-building framework. The framework repo root is two directories up from this skill's base directory. All file references below are relative to the framework repo root.
+
 ## Step 1: Read Global Learnings
 
-- Read `/Users/sukritandvandana/Documents/Projects/learning-from-building/learnings_for_Sukrit_global.md`
+- Read the global learnings file at the framework repo root (named `learnings_for_*.md` or `LEARNINGS.md`)
 - Also read any project-level learnings files that exist in active projects
 
 ## Step 2: Pattern Analysis
@@ -15,7 +17,7 @@ description: "Cross-project learning review. Analyzes global learnings file for 
   - Tags that appear 3+ times → potential new pattern or bug class
   - Tags that appear across multiple projects → cross-project patterns
   - Learnings with similar root causes → structural issues
-- Compare against existing patterns in `/Users/sukritandvandana/Documents/Projects/learning-from-building/patterns/RECURRING_BUGS.md`
+- Compare against existing patterns in `patterns/RECURRING_BUGS.md` in the framework repo
   - Are there new bug classes not yet documented?
   - Have existing bug classes recurred since being documented?
 

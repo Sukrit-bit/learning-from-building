@@ -12,11 +12,13 @@ triggers:
 
 # Session End Skill
 
+> **Path resolution:** This skill is part of the learning-from-building framework. The framework repo root is two directories up from this skill's base directory. All file references below are relative to the framework repo root.
+
 This skill enforces the mandatory 7-step end-of-session checklist. Every session MUST complete these steps before closing. Skipping any step (outside Emergency Mode) is a protocol violation.
 
 Reference material:
-- Templates: `/Users/sukritandvandana/Documents/Projects/learning-from-building/templates/`
-- Session lifecycle framework: `/Users/sukritandvandana/Documents/Projects/learning-from-building/frameworks/SESSION_LIFECYCLE.md`
+- Templates: `templates/` in the framework repo
+- Session lifecycle framework: `frameworks/SESSION_LIFECYCLE.md` in the framework repo
 
 ---
 
@@ -52,7 +54,7 @@ Do not add fluff. Every line in CLAUDE.md must earn its place.
 
 Use a subagent (Task tool) to handle this step if possible.
 
-Read the current `MEMORY.md` at the project root. If it does not exist, create it using the template at `/Users/sukritandvandana/Documents/Projects/learning-from-building/templates/MEMORY_MD_TEMPLATE.md`.
+Read the current `MEMORY.md` at the project root. If it does not exist, create it using `templates/MEMORY_MD_TEMPLATE.md` in the framework repo.
 
 Update the following sections:
 
@@ -99,7 +101,7 @@ Rules for this document:
 
 This is the most important deliverable of the entire end-of-session process. A new session has ZERO memory of this one. Write for a stranger.
 
-Use a subagent (Task tool) to handle this step if possible. Reference the template at `/Users/sukritandvandana/Documents/Projects/learning-from-building/templates/NEXT_SESSION_PROMPT_TEMPLATE.md`.
+Use a subagent (Task tool) to handle this step if possible. Reference `templates/NEXT_SESSION_PROMPT_TEMPLATE.md` in the framework repo.
 
 Create or overwrite `NEXT_SESSION_PROMPT.md` at the project root with the following structure:
 
@@ -169,8 +171,8 @@ Tag each learning from this vocabulary (apply all that fit):
 - `#anti-pattern` — approach that failed and why
 
 Dual-write pattern — write learnings to BOTH:
-1. The project-level learnings file (e.g., `LEARNINGS.md` at the project root). Use the template at `/Users/sukritandvandana/Documents/Projects/learning-from-building/templates/LEARNINGS_TEMPLATE.md` if the file does not exist.
-2. The global learnings file at `/Users/sukritandvandana/Documents/Projects/learning-from-building/LEARNINGS.md`. Create it if it does not exist, using the same template.
+1. The project-level learnings file (e.g., `LEARNINGS.md` at the project root). Use `templates/LEARNINGS_TEMPLATE.md` in the framework repo if the file does not exist.
+2. The global learnings file (named `learnings_for_*.md` or `LEARNINGS.md`) at the framework repo root. Create it if it does not exist, using the same template.
 
 If the user says they have no learnings to share, write a single entry: "No learnings captured this session." in both files so future sessions know the step was completed.
 
@@ -184,7 +186,7 @@ Stage all documentation files modified in Steps 1-5:
 - `HANDOVER.md`
 - `NEXT_SESSION_PROMPT.md`
 - `LEARNINGS.md`
-- `/Users/sukritandvandana/Documents/Projects/learning-from-building/LEARNINGS.md`
+- The global learnings file in the framework repo
 
 Commit with the message:
 
