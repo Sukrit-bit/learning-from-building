@@ -12,7 +12,7 @@ Human-AI collaboration at production scale has structural friction that better p
 - **Session quality is inconsistent.** Some sessions produce clean handoffs; others end with undocumented state scattered across files.
 - **Knowledge stays locked in individual projects.** When the same pipeline failure class appears for the third time across a different codebase, nobody notices because learnings were never extracted.
 
-Building on [Nate B. Jones' Four Prompting Disciplines](https://www.youtube.com/watch?v=c_hHeDYljbI), we identified that prompting is one of four skills -- and the one that matters least as agents grow more autonomous. The other three (context engineering, intent engineering, specification engineering) are where the real output gap lives.
+Building on [Nate B. Jones' Four Prompting Disciplines](https://www.youtube.com/watch?v=BpibZSMGtdY), we identified that prompting is one of four skills -- and the one that matters least as agents grow more autonomous. The other three (context engineering, intent engineering, specification engineering) are where the real output gap lives.
 
 ## The Friction Points We Addressed
 
@@ -59,6 +59,6 @@ If the repo moves, re-run `install.sh` -- symlinks use absolute paths.
 
 ## Credits and Further Reading
 
-The [Four Disciplines](frameworks/FOUR_DISCIPLINES.md) framework builds on [Nate B. Jones' work on prompting disciplines](https://www.youtube.com/watch?v=c_hHeDYljbI), extending the model to cover context, intent, and specification engineering. See [TECHNICAL.md](TECHNICAL.md) for engineering decisions behind the skill architecture, template design constraints, and pattern classification methodology.
+The [Four Disciplines](frameworks/FOUR_DISCIPLINES.md) framework builds on [Nate B. Jones' work on prompting disciplines](https://www.youtube.com/watch?v=BpibZSMGtdY), extending the model to cover context, intent, and specification engineering. See [TECHNICAL.md](TECHNICAL.md) for engineering decisions behind the skill architecture, template design constraints, and pattern classification methodology.
 
 Built with [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
