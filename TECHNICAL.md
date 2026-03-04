@@ -1,269 +1,162 @@
 # Technical Architecture
 
-This document covers the engineering decisions behind learning-from-building: why things are structured the way they are, what alternatives were considered, and where the tradeoffs lie. Written for Claude Code power users, engineers evaluating the framework, and anyone who wants to understand or extend the system.
-
-For what the framework does and how to get started, see [README.md](README.md). For the methodology and intellectual framework behind it, see [METHODOLOGY.md](METHODOLOGY.md).
+How the framework is structured, why each decision was made, and how to extend it. For what it does and how to get started, see [README.md](README.md).
 
 ---
 
 ## Architecture Overview
 
+Claude Code consumes each layer differently. The directory tree below annotates how.
+
 ```
 learning-from-building/
-├── frameworks/        Conceptual models (session lifecycle, four disciplines)
-├── templates/         Starter files for new projects (CLAUDE.md, MEMORY.md, etc.)
-├── guides/            Reference material (agent orchestration, capability map)
-├── patterns/          Cross-project patterns extracted from real failures
-├── skills/            Claude Code slash commands (session-start, session-end, etc.)
-├── private/           Gitignored docs (voice guidelines, strategic context)
-├── install.sh         Symlinks skills to ~/.claude/skills/ for global access
-└── learnings_for_Sukrit_global.md   Cross-project learning log
+├── CLAUDE.md                        # Auto-loaded every turn (context tax)
+├── frameworks/                      # Referenced on demand by skills
+│   ├── FOUR_DISCIPLINES.md
+│   └── SESSION_LIFECYCLE.md
+├── guides/                          # Referenced on demand by skills
+│   ├── CAPABILITY_MAP.md
+│   └── AGENT_ORCHESTRATION.md
+├── patterns/                        # Loaded conditionally by session-start
+│   ├── RECURRING_BUGS.md
+│   ├── ARCHITECTURE_PATTERNS.md
+│   └── ANTI_PATTERNS.md
+├── templates/                       # Copied into new projects (never referenced in place)
+│   ├── CLAUDE_MD_TEMPLATE.md
+│   ├── MEMORY_MD_TEMPLATE.md
+│   ├── NEXT_SESSION_PROMPT_TEMPLATE.md
+│   └── LEARNINGS_TEMPLATE.md
+├── skills/                          # Symlinked to ~/.claude/skills/ for global access
+│   ├── session-start/SKILL.md
+│   ├── session-end/SKILL.md
+│   ├── new-project/SKILL.md
+│   └── feedback-loop/SKILL.md
+├── install.sh                       # Creates/repairs skill symlinks
+└── README.md
 ```
-
-Each directory has a distinct role in how Claude Code consumes the content:
-
-- **frameworks/** and **guides/** are referenced by skills via file paths. They are never auto-loaded. An agent reads them only when a skill explicitly points to them, keeping them out of the context window until needed.
-- **templates/** are copied, not referenced. The `/new-project` skill copies a template into a target project and fills in project-specific details. The template in this repo stays pristine.
-- **patterns/** are checked against during work. The session-start skill reads the relevant pattern files based on what the session involves (data pipelines trigger status-mismatch checks, API work triggers rate-limit checks).
-- **skills/** are symlinked to `~/.claude/skills/` and become available as slash commands in any project on the machine.
 
 ---
 
 ## Design Decisions
 
-### Skills over `.claude/rules/`
+### Skills vs. rules
 
-Claude Code has two mechanisms for injecting instructions: **rules** (passive, auto-loaded every turn) and **skills** (invocable, triggered by the user or by name).
+Claude Code has two instruction injection mechanisms: **rules** (`.claude/rules/` files, passive, auto-loaded every turn) and **skills** (`~/.claude/skills/` directories, invocable, zero cost when inactive). Rules are appropriate for standing constraints that must apply unconditionally. Skills are appropriate for procedural workflows triggered at specific moments.
 
-Rules are a tax on every interaction. Every rule file in `.claude/rules/` is loaded into the context window on every turn, whether it is relevant or not. For standing constraints like "never echo pasted content back," this is the right mechanism -- the instruction must be present unconditionally. But for procedural workflows like "run the 7-step session-end checklist," loading those instructions on every turn wastes context budget on turns where the workflow is not active.
+The tradeoff: rules enforce automatically but tax every turn. Skills cost nothing when inactive but require the user to invoke them. The framework uses both -- rules for invariants like "never echo pasted content," skills for workflows like the 7-step session-end checklist.
 
-Skills solve this. A skill is loaded only when invoked. The user types `/session-end` and the skill's SKILL.md is injected into context for that interaction. On every other turn, it costs zero tokens.
+### Symlinks vs. copies
 
-Skills are also composable in a way rules are not. The session-end skill references the NEXT_SESSION_PROMPT template, which references the session lifecycle framework. Each layer is loaded only when needed, forming a chain of progressive disclosure rather than a monolithic instruction set.
-
-The tradeoff: skills require the user to remember to invoke them. A rule enforces behavior automatically; a skill enforces it only when called. This is why the framework uses both -- rules for standing constraints that must always apply, skills for procedural workflows that are triggered at specific moments.
-
-### Symlinks over copies
-
-Skills are installed by symlinking from this repo into `~/.claude/skills/`:
-
-```bash
-ln -s /path/to/learning-from-building/skills/session-end/ ~/.claude/skills/session-end
-```
-
-The alternative was copying skill files into `~/.claude/skills/`. Copies have one advantage: they survive if the source repo moves or is deleted. But copies create a synchronization problem. When a skill is improved in the source repo, every copy must be updated manually. With 4 skills across potentially many machines, copy drift is inevitable.
-
-Symlinks maintain a single source of truth. Edit the skill in the repo, and every project on that machine picks up the change immediately. The cost is fragility: if the repo moves, all symlinks break. This is why `install.sh` exists -- re-running it after a repo relocation repairs all symlinks in one command.
-
-The `install.sh` script is intentionally minimal. It iterates over directories in `skills/`, checks for a `SKILL.md` file (the marker that a directory is a valid skill), removes any existing symlink or directory at the target, and creates a fresh symlink. It does not modify any skills that were installed from other sources -- only skills with matching names are overwritten.
+Skills are installed by symlinking from this repo into `~/.claude/skills/`. The alternative is copying files. Copies survive repo relocation but create a synchronization problem: when a skill is improved in the source repo, every copy must be updated manually. Symlinks maintain a single source of truth -- edit the skill in the repo, every project picks up the change immediately. The cost is fragility: moving the repo breaks all symlinks. `install.sh` repairs them in one command.
 
 ### Progressive disclosure
 
-Skills reference files which reference more files. An agent discovers context as it needs it rather than loading everything upfront.
+Skills reference files which reference more files. The agent discovers context as needed rather than loading everything upfront. Example: [session-start](skills/session-start/SKILL.md) mentions [patterns/RECURRING_BUGS.md](patterns/RECURRING_BUGS.md) but only loads it if the session involves data pipelines. If the session is about documentation, that file is never loaded, saving its full token cost.
 
-Consider the session-start skill. Its SKILL.md contains the 5-step startup protocol. Step 4 says: "Reference `/path/to/patterns/RECURRING_BUGS.md` if the session involves data pipelines." The agent reads RECURRING_BUGS.md only if the session actually involves data pipelines. If the session is about documentation, that file is never loaded, saving its entire token cost.
+This mirrors how a developer navigates a codebase: read the entry point, follow references as needed, stop when you have enough context.
 
-This mirrors how a developer navigates a codebase: you read the entry point, follow references as needed, and stop when you have enough context. The alternative -- inlining all reference material into the skill itself -- would produce multi-hundred-line SKILL.md files that consume significant context on every invocation, whether or not most of the content is relevant.
+### 150-line template constraint
 
-The pattern also means skills stay short. The longest skill in this framework (session-end) is around 210 lines. Without progressive disclosure, it would need to inline the NEXT_SESSION_PROMPT template, the MEMORY_MD template, the learnings template, and the session lifecycle framework -- easily 500+ lines.
+[CLAUDE.md](CLAUDE.md) is auto-loaded every turn. A 300-line CLAUDE.md costs roughly 3-5% of context per turn, compounding across a session. The 150-line limit halves that. Enforcement: exceeding 150 lines triggers a mandatory split into template + `.claude/rules/` reference files. This is encoded as an escalation trigger in the [CLAUDE.md template](templates/CLAUDE_MD_TEMPLATE.md) itself.
 
-### Template constraints: the 150-line rule
+### Constraint architecture as intent encoding
 
-Every template in this framework must stay under 150 lines. This is not aesthetic minimalism; it is a context budget constraint.
-
-CLAUDE.md is auto-loaded by Claude Code on every turn. A 300-line CLAUDE.md consumes roughly 3-5% of the context window per turn, compounding across a full session. A 150-line CLAUDE.md halves that cost. Over a 40-turn session, the savings add up to the equivalent of several large file reads.
-
-The enforcement mechanism: if a template exceeds 150 lines during authoring, it must be split. The template keeps the essentials (identity, architecture, constraints, session protocol), and overflow content moves to `.claude/rules/` files that are loaded conditionally. The CLAUDE.md template is currently 150 lines -- right at the limit.
+Four constraint tiers (MUSTS, MUST NOTS, PREFERENCES, ESCALATION TRIGGERS) signal priority to the model. Flat instruction lists get uniform compliance -- the model treats critical invariants and nice-to-haves with roughly the same adherence rate. Tiered structure lets the model calibrate: MUSTS are non-negotiable, PREFERENCES yield to context, ESCALATION TRIGGERS define the boundary between agent autonomy and human decision-making. This structure is documented in [frameworks/FOUR_DISCIPLINES.md](frameworks/FOUR_DISCIPLINES.md).
 
 ---
 
 ## Template Design
 
-### CLAUDE.md: Constraint Architecture
+### CLAUDE.md -- constraint architecture
 
-The CLAUDE.md template is structured around four constraint types rather than free-form instructions:
+The [CLAUDE.md template](templates/CLAUDE_MD_TEMPLATE.md) is structured around the four constraint types rather than free-form instructions. Universal rules are drawn from recurring failures across projects -- they earned their place by breaking things when absent. Blank slots accept project-specific additions. The constraint tiers ensure the model distinguishes between invariants and preferences without explicit priority numbers.
 
-1. **MUSTS** -- invariant behaviors that apply every turn
-2. **MUST NOTS** -- structural bans on known failure modes
-3. **PREFERENCES** -- judgment calls when multiple valid approaches exist
-4. **ESCALATION TRIGGERS** -- bright lines where the agent must stop and ask
+### MEMORY.md -- annotations and staleness
 
-This structure exists because flat instruction lists produce inconsistent behavior. When an LLM receives 30 undifferentiated instructions, it treats them as roughly equal in priority. It might follow a critical invariant 95% of the time and a nice-to-have preference 95% of the time -- same compliance rate for vastly different stakes.
-
-The four-tier structure signals priority. MUSTS and MUST NOTS are non-negotiable. PREFERENCES are default behaviors that can be overridden by context. ESCALATION TRIGGERS define the boundary between agent autonomy and human decision-making. An LLM can calibrate its behavior differently across these tiers in a way it cannot when all instructions are presented at the same level.
-
-The template ships with universal rules (parallelize independent tasks, never echo pasted content, delegate large file reads) and blank slots for project-specific additions. The universal rules are drawn from recurring failures across three projects -- they earned their place by breaking things when absent.
-
-### MEMORY.md: Annotations and Staleness
-
-The MEMORY.md template includes HTML comments (annotations) above every section explaining why that section exists and what failure mode it prevents:
+The [MEMORY.md template](templates/MEMORY_MD_TEMPLATE.md) includes HTML comment annotations above each section:
 
 ```markdown
 <!-- ANNOTATION: This section is the delivery mechanism for cross-session tasks. -->
-<!-- Handover docs don't get acted on because they have no delivery mechanism. -->
 ```
 
-These annotations are invisible to humans reading the rendered Markdown but visible to Claude, which reads raw file content. They serve as inline instruction reinforcement: even if the agent has lost the original SKILL.md context, the annotations in MEMORY.md itself explain what each section is for and how to maintain it.
+These are invisible in rendered Markdown but visible to Claude, which reads raw file content. They serve as inline instruction reinforcement that persists even after the skill context is unloaded.
 
-The "Action Required" section at the top of MEMORY.md exists because of a specific failure pattern. Across multiple projects, tasks written in handover documents were never completed. The handover doc was read at session start, but its tasks had no forcing function -- they competed with whatever the new session's goals were and lost. Placing action items at the top of an auto-loaded file (MEMORY.md is read every session by the session-start skill) gives them a delivery mechanism: they are visible immediately, before any new work begins.
+The "Action Required" section sits at the top. This exists because handover tasks written elsewhere had no forcing function -- they competed with new session goals and lost. Placing them at the top of an auto-loaded file gives them a delivery mechanism: visible immediately, before new work begins. Template kept under 37 lines to minimize per-session token cost.
 
-The template is kept under 37 lines. MEMORY.md is read every session start. Every line costs tokens across every session for the lifetime of the project.
+### NEXT_SESSION_PROMPT -- specification, not summary
 
-### NEXT_SESSION_PROMPT: Specification Engineering
+The [NEXT_SESSION_PROMPT template](templates/NEXT_SESSION_PROMPT_TEMPLATE.md) treats handover as a specification (prescriptive), not a summary (descriptive). Each work stream includes: measurable goals, concrete steps, explicit dependencies, and binary acceptance criteria. An orchestration section maps which streams can run in parallel vs. sequentially -- without this, sessions default to sequential execution even when parallelism is available.
 
-The NEXT_SESSION_PROMPT template treats the handover as a specification, not a summary. The distinction matters: a summary describes what happened; a specification prescribes what should happen next.
-
-Each work stream includes:
-- A measurable goal (not "improve X" but "X passes N tests")
-- Concrete steps
-- Explicit dependencies between streams
-- Binary acceptance criteria
-
-The template also includes an orchestration section that maps which streams can run in parallel and which must be sequential. This exists because Claude Code supports parallel agent dispatch, but only if the user (or the specification) identifies which tasks are independent. Without this section, the next session defaults to sequential execution even when parallelism is possible.
-
-The self-containment rule -- "write for a stranger" -- is the template's most important constraint. The next Claude session has zero memory of the current one. Any reference to "the approach we discussed" or "continue from where we left off" is a bug. Every piece of context the next session needs must be in the document itself.
+The self-containment rule is the most important constraint: write for a stranger with zero memory. Any reference to "the approach we discussed" is a bug. Every piece of context the next session needs must be in the document itself.
 
 ---
 
 ## Skill System
 
-### Structure
+Each skill is a directory containing a SKILL.md file with YAML frontmatter (name, description, optional triggers) and Markdown instructions. Composition happens through file references -- no imports, no inheritance, no version pinning. A skill tells the agent what to do and where to find more information.
 
-Each skill lives in its own directory under `skills/`:
-
-```
-skills/
-├── session-start/
-│   └── SKILL.md
-├── session-end/
-│   └── SKILL.md
-├── new-project/
-│   └── SKILL.md
-└── feedback-loop/
-    └── SKILL.md
-```
-
-The SKILL.md file is the only required file. It contains YAML frontmatter (name, description, optional triggers) and the skill's instructions in Markdown. Claude Code discovers skills by scanning `~/.claude/skills/` for directories containing a SKILL.md file.
-
-The trigger field in the frontmatter defines natural language phrases that activate the skill automatically (e.g., "end session," "wrap up," "close out" all trigger the session-end skill). This reduces reliance on the user remembering the exact slash command.
-
-### Composition
-
-Skills compose through file references, not inheritance or imports. The session-end skill references the NEXT_SESSION_PROMPT template by file path:
+The four skills form a session lifecycle loop:
 
 ```
-Reference the template at /path/to/templates/NEXT_SESSION_PROMPT_TEMPLATE.md
+/session-start --> [work] --> /session-end --> NEXT_SESSION_PROMPT.md --> /session-start
 ```
 
-When the agent reaches that step, it reads the referenced file, applies its contents, and continues. The template itself may reference other files. This creates a directed graph of context loading that is traversed on demand.
+**[/session-start](skills/session-start/SKILL.md)** loads context in cache-optimal order (CLAUDE.md first since it is already auto-loaded, then MEMORY.md for action items, then NEXT_SESSION_PROMPT.md as session spec). Proposes a parallelized execution plan and surfaces relevant bug patterns before work begins.
 
-The composition model is deliberately simple. There is no skill dependency resolution, no version pinning, no conflict detection. A skill is a Markdown file that tells the agent what to do and where to find more information. The complexity budget is spent on the content of the skills, not on the machinery of loading them.
+**[/session-end](skills/session-end/SKILL.md)** enforces a 7-step checklist: update CLAUDE.md, update MEMORY.md, create NEXT_SESSION_PROMPT.md, capture learnings (dual-write to project + global files), git commit, and report context usage. Includes an emergency mode for critically low context.
 
-### The Session Lifecycle
+**[/new-project](skills/new-project/SKILL.md)** scaffolds a new project from templates. Asks four questions (identity, tech stack, scope, constraints), copies and fills templates, creates the directory structure, makes an initial commit.
 
-The four core skills form a lifecycle:
-
-```
-/session-start → [active work] → /session-end
-                                       ↓
-                          NEXT_SESSION_PROMPT.md
-                                       ↓
-                          /session-start (next session)
-```
-
-**/session-start** loads context in cache-optimal order (CLAUDE.md first, since it is already auto-loaded; MEMORY.md second for action items; NEXT_SESSION_PROMPT.md third as the session specification). It then proposes a parallelized execution plan and surfaces any relevant bug patterns before work begins.
-
-**/session-end** enforces a 7-step checklist: update CLAUDE.md, update MEMORY.md, create HANDOVER.md, create NEXT_SESSION_PROMPT.md, capture learnings (dual-write to project and global files), git commit, and report context budget usage. It includes an emergency mode for when context is critically low -- minimum viable close is NEXT_SESSION_PROMPT.md + MEMORY.md update + git commit.
-
-**/new-project** bootstraps a new project with templates from this repo. It asks four questions (identity, tech stack, scope, constraints), copies and fills templates, creates the directory structure, and makes an initial git commit.
-
-**/feedback-loop** closes the learning cycle. It reads the global learnings file, groups entries by tags, identifies recurring themes (3+ appearances = potential new pattern), compares against existing patterns, and recommends template or pattern updates. It is designed to run every 3 sessions or at the start of a new project.
-
-The lifecycle ensures that knowledge flows forward: session N's learnings become session N+1's starting context via NEXT_SESSION_PROMPT.md and MEMORY.md, and the feedback loop periodically promotes recurring learnings into permanent patterns and template improvements.
+**[/feedback-loop](skills/feedback-loop/SKILL.md)** scans the global learnings file for tags appearing 3+ times, compares against existing patterns, and recommends promotions to pattern files or template updates.
 
 ---
 
 ## Pattern System
 
-### Classification
+Three files, each with a distinct purpose:
 
-Patterns are organized into three files, each serving a different purpose:
+**[RECURRING_BUGS.md](patterns/RECURRING_BUGS.md)** -- Bug classes appearing 2+ times across projects. Each entry: pattern name, specific appearances, root cause analysis, prevention checklist. Threshold: a bug must have appeared at least twice to be included.
 
-**RECURRING_BUGS.md** -- Bug classes that appeared across multiple projects. Each entry includes the pattern, specific appearances (which project, which session), root cause analysis, and a prevention checklist. The threshold for inclusion: a bug must have appeared at least twice across at least one project. Single-occurrence bugs stay in project-level learnings files until they recur.
+**[ARCHITECTURE_PATTERNS.md](patterns/ARCHITECTURE_PATTERNS.md)** -- Solutions validated in production. Each entry: what the pattern is, when to use it, how to implement it, which project validated it. Threshold: must have been used successfully in at least one real project.
 
-Currently documented bug classes: status mismatch (status fields used as implicit state machines without documented transitions), context compaction (main thread context exhaustion from large file reads and verbose output), documentation drift (CLAUDE.md or MEMORY.md diverging from reality), silent failures (operations that succeed at the call level but produce empty or wrong results), and API rate limit collisions (parallel streams sharing rate-limited resources).
+**[ANTI_PATTERNS.md](patterns/ANTI_PATTERNS.md)** -- Approaches that look reasonable but fail. Each entry: what it looks like, why it fails, what to do instead. Every entry corresponds to a specific incident where the approach caused measurable damage.
 
-**ARCHITECTURE_PATTERNS.md** -- Proven solutions validated across projects. Each entry includes when to use the pattern, how to implement it, which project validated it, and the anti-pattern it replaces. The threshold for inclusion: the pattern must have been used successfully in at least one real project. Theoretical patterns that sound good but have not been tested are excluded.
-
-Current patterns: fallback chains, dual-write, resume-safe scripts, dry-run, progressive disclosure, cache-safe forking, git-committed cache as scraper fallback, and state machine documentation.
-
-**ANTI_PATTERNS.md** -- Things that look reasonable but cause real problems. Each entry includes what the approach looks like, why it fails, and what to do instead. Anti-patterns are sourced directly from session failures -- every entry corresponds to a specific incident where the approach caused measurable damage (context window exhaustion, data loss, wasted API calls, etc.).
-
-### Sourcing methodology
-
-Every pattern, bug class, and anti-pattern in this framework is extracted from real project work across three codebases: Daily Briefing (a multi-source news aggregation pipeline), Delhi Co-Pilot (a civic information tool with web scraping and LLM processing), and AI Summit Intel (a conference content extraction system processing 200+ sessions).
-
-The extraction process:
-
-1. During each session, failures and successes are captured in project-level learnings files using a structured format (what happened, key learnings, tags).
-2. Learnings are dual-written to a global file with condensed versions and consistent tags.
-3. The feedback-loop skill periodically scans the global file for tags appearing 3+ times or across multiple projects.
-4. Recurring patterns are promoted from learnings entries to pattern files with full documentation (root cause, prevention checklist, validation source).
-
-This means the pattern files grow slowly and deliberately. A pattern is not added because it seems like a good idea; it is added because it was proven necessary by repeated failure or success.
+**Extraction pipeline:** Session learnings are dual-written to project + global files. The [feedback-loop](skills/feedback-loop/SKILL.md) skill scans the global file for tags appearing 3+ times. Recurring themes are promoted from learnings entries to pattern files with full documentation. Patterns grow slowly and deliberately -- inclusion requires repeated real-world validation.
 
 ---
 
 ## Installation and Extension
 
-### Installing skills globally
+### Install
 
 ```bash
 git clone https://github.com/Sukrit-bit/learning-from-building.git
 cd learning-from-building
-chmod +x install.sh
-./install.sh
+chmod +x install.sh && ./install.sh
 ```
 
-This creates symlinks in `~/.claude/skills/` for every skill directory that contains a SKILL.md file. Existing symlinks with the same name are overwritten. Skills installed from other sources (different name) are untouched.
+This symlinks every valid skill (directories under `skills/` containing a SKILL.md) into `~/.claude/skills/`. Re-run after repo relocation to repair broken symlinks.
 
-If the repo moves after installation, re-run `install.sh` to repair the broken symlinks.
+### Add a new skill
 
-### Adding a new skill
+1. Create `skills/<skill-name>/SKILL.md` with YAML frontmatter and Markdown instructions.
+2. Run `./install.sh` to symlink it globally.
 
-1. Create a directory under `skills/` with the skill name (e.g., `skills/my-skill/`).
-2. Add a `SKILL.md` file with YAML frontmatter and Markdown instructions:
-   ```yaml
-   ---
-   name: my-skill
-   description: "What this skill does and when to use it."
-   ---
-   ```
-3. Reference external files by absolute path for any content the skill needs but should not inline.
-4. Run `./install.sh` to symlink the new skill globally.
+### Add a new template
 
-### Adding a new template
+Add a Markdown file to `templates/`. Follow the 150-line constraint. Include HTML comment annotations for sections Claude will maintain -- annotations persist as inline instructions after skill context is unloaded.
 
-Add a Markdown file to `templates/`. Follow the 150-line constraint. Include HTML comment annotations for sections that Claude will read and maintain -- the annotations serve as inline instructions that survive even when the skill context that originally explained them has been unloaded.
+### Add a new pattern
 
-### Adding a new pattern
-
-Add an entry to the appropriate file in `patterns/`. Follow the existing structure:
-- **Bug class:** Pattern, appearances (with project/session citations), root cause, prevention checklist.
-- **Architecture pattern:** What, when to use, how to implement, which project validated it, anti-pattern it replaces.
-- **Anti-pattern:** What it looks like, why it fails, what to do instead.
-
-Do not add patterns that have not been validated by real project work. The "real experience" constraint is the single most important quality gate in the framework.
+Add an entry to the appropriate file in `patterns/`. Follow the existing structure (pattern/appearances/root cause/prevention for bugs; what/when/how/validation for architecture; looks like/why it fails/alternative for anti-patterns). Must cite real project validation -- no theoretical patterns.
 
 ---
 
 ## Known Limitations
 
-- **Symlink fragility.** Moving the repo breaks all global skill installations. The fix is simple (re-run `install.sh`) but the failure is silent -- skills stop appearing as slash commands with no error message.
-- **Skill shadowing.** If a project has a `.claude/skills/my-skill/` directory and the global `~/.claude/skills/my-skill/` also exists, the project-level skill takes precedence. This is Claude Code's intended behavior, but it can cause confusion when the two versions diverge.
-- **No skill versioning.** There is no mechanism for pinning a project to a specific version of a skill. All projects share the latest version via symlinks. A breaking change to a skill affects every project on the machine immediately.
-- **Template line counts are manually enforced.** There is no automated check that templates stay under 150 lines. The escalation trigger in CLAUDE.md catches it during authoring, but nothing prevents a template from exceeding the limit if the author does not invoke the framework's own skills.
-
----
-
-See [README.md](README.md) for setup instructions and a quick-start guide. See [METHODOLOGY.md](METHODOLOGY.md) for the intellectual framework and the reasoning behind the four disciplines.
+- **Symlink fragility.** Moving the repo breaks all global skill installations. The failure is silent -- skills stop appearing as slash commands with no error. Fix: re-run `install.sh`.
+- **Skill shadowing.** A project-level `.claude/skills/<name>/` overrides a global `~/.claude/skills/<name>/`. Intended by Claude Code, but confusing when versions diverge.
+- **No versioning.** All projects share the latest skill version via symlinks. A breaking change to a skill affects every project immediately.
+- **No automated validation.** Template line counts are manually enforced. The escalation trigger in CLAUDE.md catches violations during authoring, but nothing prevents exceeding the limit outside the framework's own skills.
+- **Single-user design.** No multi-user collaboration features. The framework assumes one developer working with Claude Code across multiple projects.
+- **Path resolution.** Skills reference framework repo files by path. If the symlink chain is broken (repo moved, intermediate directories renamed), file references in skills resolve to nothing.
