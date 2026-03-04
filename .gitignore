@@ -1,0 +1,23 @@
+# Claude Code internals
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# No data files in this repo
+*.db
+*.sqlite
+
+# Environment
+.env
+.env.*
+venv/
+__pycache__/
