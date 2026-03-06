@@ -64,7 +64,7 @@ claude-operating-system/
 - `/new-project` — Bootstrap new project from templates
 - `/feedback-loop` — Cross-project learning review
 - `/learnings` — Dual-write learnings (project + global markdown) + generate HTML dashboard
-- `/visualize-learnings` — Generate interactive HTML dashboard from project learnings file
+- `/visualize-learnings` — Generate Learning Studio: concept-first dashboard with Mermaid diagrams, deep dives, retrieval practice, bug museum, principles wall
 
 ## Key References
 
