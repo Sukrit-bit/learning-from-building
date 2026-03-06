@@ -13,8 +13,9 @@ claude-operating-system/
 ├── guides/         Reference material (Capability Map, Agent Orchestration)
 ├── patterns/       Cross-project patterns (recurring bugs, architectures, anti-patterns)
 ├── skills/         Claude Code slash commands — globally installed via install.sh
+├── hooks/          PostToolUse + PreCompact hooks — sensor layer for context monitoring
 ├── private/        Non-public docs (gitignored)
-└── install.sh      Symlinks skills to ~/.claude/skills/ for global access
+└── install.sh      Installs skills, hooks, and hook config globally
 ```
 
 **How Claude Code consumes each layer:**

@@ -35,8 +35,10 @@ claude-operating-system/
 │   ├── session-start/SKILL.md
 │   ├── session-end/SKILL.md
 │   ├── new-project/SKILL.md
-│   └── feedback-loop/SKILL.md
-├── install.sh                       # Creates/repairs skill symlinks
+│   ├── feedback-loop/SKILL.md
+│   ├── learnings/SKILL.md
+│   └── visualize-learnings/SKILL.md
+├── install.sh                       # Installs skills, hooks, and hook config globally
 └── README.md
 ```
 
